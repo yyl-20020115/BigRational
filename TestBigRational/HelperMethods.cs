@@ -15,5 +15,6 @@ public static class HelperMethods
 		return string.Join(", ", entries.Where(s => !string.IsNullOrEmpty(s)));
 	}
 
-	private static string FormatTimeUnit(string unitName, int quantity) => (quantity > 0) ? $"{quantity} {unitName}" : string.Empty;
+	private static string FormatTimeUnit(string unitName, int quantity)
+		=> (quantity > 0) ? $"{quantity} {unitName}" : string.Empty;
 }
