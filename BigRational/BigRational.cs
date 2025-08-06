@@ -30,22 +30,22 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// a negative one (-1) if the value is negative,
 	/// and zero (0) if the value is zero.
 	/// </summary>		
-	public int Sign { get { NormalizeSign(); return (WholePart != 0) ? WholePart.Sign : FractionalPart.Sign; } }
+	public int Sign => (NormalizeSign().WholePart != 0) ? WholePart.Sign : FractionalPart.Sign;
 
 	/// <summary>Indicates whether the value of the current instance is zero (0).</summary>
 	/// <value><c>true</c> if this instance is zero; otherwise, <c>false</c>.</value>
-	public bool IsZero { get { return (WholePart.IsZero && FractionalPart.IsZero); } }
+	public readonly bool IsZero => WholePart.IsZero && FractionalPart.IsZero;
 
 	#region Static Properties
 
 	/// <summary>Gets a value that represents the number one (1).</summary>
-	public static BigRational One = new BigRational(BigInteger.One);
+	public static readonly BigRational One = new(BigInteger.One);
 
 	/// <summary>Gets a value that represents the number zero (0).</summary>
-	public static BigRational Zero = new BigRational(BigInteger.Zero);
+	public static readonly BigRational Zero = new(BigInteger.Zero);
 
 	/// <summary>Gets a value that represents the number negative one (-1).</summary>
-	public static BigRational MinusOne = new BigRational(BigInteger.MinusOne);
+	public static readonly BigRational MinusOne = new(BigInteger.MinusOne);
 
 	#endregion
 
@@ -115,7 +115,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	public BigRational(BigInteger whole, BigInteger numerator, BigInteger denominator)
 	{
 		WholePart = whole;
-		FractionalPart = new Fraction(numerator, denominator);
+		FractionalPart = new (numerator, denominator);
 		NormalizeSign();
 	}
 
@@ -126,7 +126,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="value">A single-precision floating-point value.</param>
 	public BigRational(float value)
 	{
-		Tuple<BigInteger, Fraction> result = CheckForWholeValues((double)value);
+		var result = CheckForWholeValues((double)value);
 		if (result != null)
 		{
 			WholePart = result.Item1;
@@ -135,7 +135,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 		else
 		{
 			WholePart = (BigInteger)Math.Truncate(value);
-			float fract = Math.Abs(value) % 1;
+			var fract = Math.Abs(value) % 1;
 			FractionalPart = (fract == 0) ? Fraction.Zero : new Fraction(fract);
 			NormalizeSign();
 		}
@@ -148,7 +148,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="value">A double-precision floating-point value.</param>
 	public BigRational(double value)
 	{
-		Tuple<BigInteger, Fraction> result = CheckForWholeValues(value);
+		var result = CheckForWholeValues(value);
 		if (result != null)
 		{
 			WholePart = result.Item1;
@@ -157,7 +157,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 		else
 		{
 			WholePart = (BigInteger)Math.Truncate(value);
-			double fract = Math.Abs(value) % 1;
+			var fract = Math.Abs(value) % 1;
 			FractionalPart = (fract == 0) ? Fraction.Zero : new Fraction(fract);
 			NormalizeSign();
 		}
@@ -170,7 +170,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="value">A 128-bit base-10 floating point decimal number.</param>
 	public BigRational(decimal value)
 	{
-		Tuple<BigInteger, Fraction> result = CheckForWholeValues((double)value);
+		var result = CheckForWholeValues((double)value);
 		if (result != null)
 		{
 			WholePart = result.Item1;
@@ -179,7 +179,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 		else
 		{
 			WholePart = (BigInteger)Math.Truncate(value);
-			decimal fract = Math.Abs(value) % 1;
+			var fract = Math.Abs(value) % 1;
 			FractionalPart = (fract == 0) ? Fraction.Zero : new Fraction(fract);
 			NormalizeSign();
 		}
@@ -193,31 +193,17 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// </summary>
 	/// <exception cref="System.ArgumentException">Value is not a number - value</exception>
 	/// <exception cref="System.ArgumentException">Cannot represent infinity - value</exception>
-	private static Tuple<BigInteger, Fraction> CheckForWholeValues(double value)
-	{
-		if (double.IsNaN(value))
-		{
-			throw new ArgumentException("Value is not a number", nameof(value));
-		}
-		if (double.IsInfinity(value))
-		{
-			throw new ArgumentException("Cannot represent infinity", nameof(value));
-		}
-
-		if (value == 0)
-		{
-			return new Tuple<BigInteger, Fraction>(BigInteger.Zero, Fraction.Zero);
-		}
-		else if (value == 1)
-		{
-			return new Tuple<BigInteger, Fraction>(BigInteger.One, Fraction.Zero);
-		}
-		else if (value == -1)
-		{
-			return new Tuple<BigInteger, Fraction>(BigInteger.MinusOne, Fraction.Zero);
-		}
-		return null;
-	}
+	private static Tuple<BigInteger, Fraction> CheckForWholeValues(double value) => double.IsNaN(value)
+			? throw new ArgumentException("Value is not a number", nameof(value))
+			: double.IsInfinity(value)
+			? throw new ArgumentException("Cannot represent infinity", nameof(value))
+			: value switch
+			{
+				0 => new Tuple<BigInteger, Fraction>(BigInteger.Zero, Fraction.Zero),
+				1 => new Tuple<BigInteger, Fraction>(BigInteger.One, Fraction.Zero),
+				-1 => new Tuple<BigInteger, Fraction>(BigInteger.MinusOne, Fraction.Zero),
+				_ => null,
+			};
 
 	#endregion
 
@@ -231,11 +217,11 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The sum.</returns>
 	public static BigRational Add(BigRational augend, BigRational addend)
 	{
-		Fraction fracAugend = augend.GetImproperFraction();
-		Fraction fracAddend = addend.GetImproperFraction();
+		var fracAugend = augend.GetImproperFraction();
+		var fracAddend = addend.GetImproperFraction();
 
-		BigRational result = Add(fracAugend, fracAddend);
-		BigRational reduced = BigRational.Reduce(result);
+		var result = Add(fracAugend, fracAddend);
+		var reduced = Reduce(result);
 		return reduced;
 	}
 
@@ -247,11 +233,11 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The difference.</returns>
 	public static BigRational Subtract(BigRational minuend, BigRational subtrahend)
 	{
-		Fraction fracMinuend = minuend.GetImproperFraction();
-		Fraction fracSubtrahend = subtrahend.GetImproperFraction();
+		var fracMinuend = minuend.GetImproperFraction();
+		var fracSubtrahend = subtrahend.GetImproperFraction();
 
-		BigRational result = Subtract(fracMinuend, fracSubtrahend);
-		BigRational reduced = BigRational.Reduce(result);
+		var result = Subtract(fracMinuend, fracSubtrahend);
+		var reduced = Reduce(result);
 		return reduced;
 	}
 
@@ -263,11 +249,11 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The product.</returns>
 	public static BigRational Multiply(BigRational multiplicand, BigRational multiplier)
 	{
-		Fraction fracMultiplicand = multiplicand.GetImproperFraction();
-		Fraction fracMultiplier = multiplier.GetImproperFraction();
+		var fracMultiplicand = multiplicand.GetImproperFraction();
+		var fracMultiplier = multiplier.GetImproperFraction();
 
-		BigRational result = Fraction.ReduceToProperFraction(Fraction.Multiply(fracMultiplicand, fracMultiplier));
-		BigRational reduced = BigRational.Reduce(result);
+		var result = Fraction.ReduceToProperFraction(Fraction.Multiply(fracMultiplicand, fracMultiplier));
+		var reduced = Reduce(result);
 		return reduced;
 	}
 
@@ -279,10 +265,10 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The quotient.</returns>
 	public static BigRational Divide(BigInteger dividend, BigInteger divisor)
 	{
-		BigInteger remainder = new BigInteger(-1);
-		BigInteger quotient = BigInteger.DivRem(dividend, divisor, out remainder);
+		var remainder = new BigInteger(-1);
+		var quotient = BigInteger.DivRem(dividend, divisor, out remainder);
 
-		BigRational result = new BigRational(
+		var result = new BigRational(
 				quotient,
 				new Fraction(remainder, divisor)
 			);
@@ -299,14 +285,14 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	public static BigRational Divide(BigRational dividend, BigRational divisor)
 	{
 		// a/b / c/d  == (ad)/(bc)			
-		Fraction l = dividend.GetImproperFraction();
-		Fraction r = divisor.GetImproperFraction();
+		var l = dividend.GetImproperFraction();
+		var r = divisor.GetImproperFraction();
 
-		BigInteger ad = BigInteger.Multiply(l.Numerator, r.Denominator);
-		BigInteger bc = BigInteger.Multiply(l.Denominator, r.Numerator);
+		var ad = BigInteger.Multiply(l.Numerator, r.Denominator);
+		var bc = BigInteger.Multiply(l.Denominator, r.Numerator);
 
-		Fraction newFraction = new Fraction(ad, bc);
-		BigRational result = Fraction.ReduceToProperFraction(newFraction);
+		var newFraction = new Fraction(ad, bc);
+		var result = Fraction.ReduceToProperFraction(newFraction);
 		return result;
 	}
 
@@ -318,7 +304,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The remainder.</returns>
 	public static BigRational Remainder(BigInteger dividend, BigInteger divisor)
 	{
-		BigInteger remainder = (dividend % divisor);
+		var remainder = (dividend % divisor);
 		return new BigRational(BigInteger.Zero, new Fraction(remainder, divisor));
 	}
 
@@ -330,8 +316,8 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The remainder (modulus).</returns>
 	public static BigRational Mod(BigRational number, BigRational mod)
 	{
-		Fraction num = number.GetImproperFraction();
-		Fraction modulus = mod.GetImproperFraction();
+		var num = number.GetImproperFraction();
+		var modulus = mod.GetImproperFraction();
 
 		return new BigRational(Fraction.Remainder(num, modulus));
 	}
@@ -344,7 +330,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The result of raising the base value to the exponent power.</returns>
 	public static BigRational Pow(BigRational baseValue, BigInteger exponent)
 	{
-		Fraction fractPow = Fraction.Pow(baseValue.GetImproperFraction(), exponent);
+		var fractPow = Fraction.Pow(baseValue.GetImproperFraction(), exponent);
 		return new BigRational(fractPow);
 	}
 
@@ -355,8 +341,8 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The square root of the specified value.</returns>
 	public static BigRational Sqrt(BigRational value)
 	{
-		Fraction input = value.GetImproperFraction();
-		Fraction result = Fraction.Sqrt(input);
+		var input = value.GetImproperFraction();
+		var result = Fraction.Sqrt(input);
 		return Fraction.ReduceToProperFraction(result);
 	}
 
@@ -372,8 +358,8 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <exception cref="System.Exception">Value must be a positive integer</exception>
 	public static BigRational NthRoot(BigRational value, int root, int precision = 30)
 	{
-		Fraction input = value.GetImproperFraction();
-		Fraction result = Fraction.NthRoot(input, root, precision);
+		var input = value.GetImproperFraction();
+		var result = Fraction.NthRoot(input, root, precision);
 		return Fraction.ReduceToProperFraction(result);
 	}
 
@@ -383,9 +369,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="rational">The number whose logarithm is to be found.</param>
 	/// <returns>The natural (base e) logarithm of the specifed value.</returns>
 	public static double Log(BigRational rational)
-	{
-		return Fraction.Log(rational.GetImproperFraction());
-	}
+		=> Fraction.Log(rational.GetImproperFraction());
 
 	/// <summary>
 	/// Returns the absolute value of a <see cref="ExtendedNumerics.BigRational"/> value.
@@ -394,8 +378,8 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The absolute value of value of the specified number.</returns>
 	public static BigRational Abs(BigRational rational)
 	{
-		BigRational input = BigRational.Reduce(rational);
-		return new BigRational(BigInteger.Abs(input.WholePart), input.FractionalPart);
+		var input = Reduce(rational);
+		return new (BigInteger.Abs(input.WholePart), input.FractionalPart);
 	}
 
 	/// <summary>
@@ -405,12 +389,10 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The result of the specified value multiplied by negative one (-1).</returns>
 	public static BigRational Negate(BigRational rational)
 	{
-		BigRational input = BigRational.Reduce(rational);
-		if (input.WholePart == 0)
-		{
-			return new BigRational(input.WholePart, Fraction.Negate(input.FractionalPart));
-		}
-		return new BigRational(BigInteger.Negate(input.WholePart), input.FractionalPart);
+		var input = Reduce(rational);
+		return input.WholePart == 0
+			? new (input.WholePart, Fraction.Negate(input.FractionalPart))
+			: new (BigInteger.Negate(input.WholePart), input.FractionalPart);
 	}
 
 	/// <summary>
@@ -420,9 +402,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="addend">The addend.</param>
 	/// <returns>The sum.</returns>
 	public static BigRational Add(Fraction augend, Fraction addend)
-	{
-		return new BigRational(BigInteger.Zero, Fraction.Add(augend, addend));
-	}
+		=> new(BigInteger.Zero, Fraction.Add(augend, addend));
 
 	/// <summary>
 	/// Subtracts two <see cref="ExtendedNumerics.Fraction"/> numbers and returns the difference as a <see cref="ExtendedNumerics.BigRational"/>.
@@ -431,9 +411,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="subtrahend">The subtrahend.</param>
 	/// <returns>The difference.</returns>
 	public static BigRational Subtract(Fraction minuend, Fraction subtrahend)
-	{
-		return new BigRational(BigInteger.Zero, Fraction.Subtract(minuend, subtrahend));
-	}
+		=> new(BigInteger.Zero, Fraction.Subtract(minuend, subtrahend));
 
 	/// <summary>
 	/// Multiplies two <see cref="ExtendedNumerics.Fraction"/> numbers and returns the product as a <see cref="ExtendedNumerics.BigRational"/>.
@@ -442,9 +420,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="multiplier">The multiplier.</param>
 	/// <returns>The product.</returns>
 	public static BigRational Multiply(Fraction multiplicand, Fraction multiplier)
-	{
-		return new BigRational(BigInteger.Zero, Fraction.Multiply(multiplicand, multiplier));
-	}
+		=> new(BigInteger.Zero, Fraction.Multiply(multiplicand, multiplier));
 
 	/// <summary>
 	/// Divides two <see cref="ExtendedNumerics.Fraction"/> numbers and returns the quotient as a <see cref="ExtendedNumerics.BigRational"/>.
@@ -453,9 +429,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="divisor">The divisor.</param>
 	/// <returns>The quotient.</returns>
 	public static BigRational Divide(Fraction dividend, Fraction divisor)
-	{
-		return new BigRational(BigInteger.Zero, Fraction.Divide(dividend, divisor));
-	}
+		=> new (BigInteger.Zero, Fraction.Divide(dividend, divisor));
 
 	#region GCD & LCM
 
@@ -467,10 +441,10 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The least common denominator of left and right.</returns>
 	public static BigRational LeastCommonDenominator(BigRational left, BigRational right)
 	{
-		Fraction leftFrac = left.GetImproperFraction();
-		Fraction rightFrac = right.GetImproperFraction();
+		var leftFrac = left.GetImproperFraction();
+		var rightFrac = right.GetImproperFraction();
 
-		return BigRational.Reduce(new BigRational(Fraction.LeastCommonDenominator(leftFrac, rightFrac)));
+		return Reduce(new BigRational(Fraction.LeastCommonDenominator(leftFrac, rightFrac)));
 	}
 
 	/// <summary>
@@ -481,10 +455,10 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The greatest common divisor of left and right.</returns>
 	public static BigRational GreatestCommonDivisor(BigRational left, BigRational right)
 	{
-		Fraction leftFrac = left.GetImproperFraction();
-		Fraction rightFrac = right.GetImproperFraction();
+		var leftFrac = left.GetImproperFraction();
+		var rightFrac = right.GetImproperFraction();
 
-		return BigRational.Reduce(new BigRational(Fraction.GreatestCommonDivisor(leftFrac, rightFrac)));
+		return Reduce(new BigRational(Fraction.GreatestCommonDivisor(leftFrac, rightFrac)));
 	}
 
 	#endregion
@@ -558,14 +532,14 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// </summary>
 	/// <param name="value">The value to increment.</param>
 	/// <returns>The value of the value parameter incremented by 1.</returns>
-	public static BigRational operator ++(BigRational value) => Add(value, BigRational.One);
+	public static BigRational operator ++(BigRational value) => Add(value, One);
 
 	/// <summary>
 	/// Decrements a <see cref="ExtendedNumerics.BigRational"/> value by 1.
 	/// </summary>
 	/// <param name="value">The value to decrement.</param>
 	/// <returns>The value of the value parameter decremented by 1.</returns>
-	public static BigRational operator --(BigRational value) => Subtract(value, BigRational.One);
+	public static BigRational operator --(BigRational value) => Subtract(value, One);
 
 	#endregion
 
@@ -580,7 +554,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="left">The first value to compare.</param>
 	/// <param name="right">The second value to compare.</param>
 	/// <returns><c>true</c>  if the left and right parameters have the same value; otherwise, <c>false</c>.</returns>
-	public static bool operator ==(BigRational left, BigRational right) { return Compare(left, right) == 0; }
+	public static bool operator ==(BigRational left, BigRational right) => Compare(left, right) == 0;
 
 	/// <summary>
 	/// Returns a value that indicates whether two <see cref="ExtendedNumerics.BigRational"/> 
@@ -589,7 +563,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="left">The first value to compare.</param>
 	/// <param name="right">The second value to compare.</param>
 	/// <returns><c>true</c>  if left and right are not equal; otherwise, <c>false</c>.</returns>
-	public static bool operator !=(BigRational left, BigRational right) { return Compare(left, right) != 0; }
+	public static bool operator !=(BigRational left, BigRational right) => Compare(left, right) != 0;
 
 	/// <summary>
 	/// Returns a value that indicates whether a <see cref="ExtendedNumerics.BigRational"/> value is
@@ -598,7 +572,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="left">The first value to compare.</param>
 	/// <param name="right">The second value to compare.</param>
 	/// <value><c>true</c> if left is less than right; otherwise, <c>false</c>.</value>
-	public static bool operator <(BigRational left, BigRational right) { return Compare(left, right) < 0; }
+	public static bool operator <(BigRational left, BigRational right) => Compare(left, right) < 0;
 
 	/// <summary>
 	/// Returns a value that indicates whether a <see cref="ExtendedNumerics.BigRational"/> value is
@@ -607,7 +581,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="left">The first value to compare.</param>
 	/// <param name="right">The second value to compare.</param>
 	/// <value><c>true</c> if left is less than or equal to right; otherwise, <c>false</c>.</value>
-	public static bool operator <=(BigRational left, BigRational right) { return Compare(left, right) <= 0; }
+	public static bool operator <=(BigRational left, BigRational right) => Compare(left, right) <= 0;
 
 	/// <summary>
 	/// Returns a value that indicates whether a <see cref="ExtendedNumerics.BigRational"/> value is
@@ -616,7 +590,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="left">The first value to compare.</param>
 	/// <param name="right">The second value to compare.</param>
 	/// <value><c>true</c> if left is greater than right; otherwise, <c>false</c>.</value>
-	public static bool operator >(BigRational left, BigRational right) { return Compare(left, right) > 0; }
+	public static bool operator >(BigRational left, BigRational right) => Compare(left, right) > 0;
 
 	/// <summary>
 	/// Returns a value that indicates whether a<see cref="ExtendedNumerics.BigRational"/> value is
@@ -625,7 +599,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="left">The first value to compare.</param>
 	/// <param name="right">The second value to compare.</param>
 	/// <value><c>true</c> if left is greater than or equal to right; otherwise, <c>false</c>.</value>
-	public static bool operator >=(BigRational left, BigRational right) { return Compare(left, right) >= 0; }
+	public static bool operator >=(BigRational left, BigRational right) => Compare(left, right) >= 0;
 
 	#endregion
 
@@ -647,13 +621,13 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// </returns>
 	public static int Compare(BigRational left, BigRational right)
 	{
-		BigRational leftRed = BigRational.Reduce(left);
-		BigRational rightRed = BigRational.Reduce(right);
+		var leftRed = Reduce(left);
+		var rightRed = Reduce(right);
 
 		if (leftRed.WholePart == rightRed.WholePart)
 		{
-			Fraction leftFrac = leftRed.GetImproperFraction();
-			Fraction rightFrac = right.GetImproperFraction();
+			var leftFrac = leftRed.GetImproperFraction();
+			var rightFrac = right.GetImproperFraction();
 			return Fraction.Compare(leftFrac, rightFrac);
 		}
 		else
@@ -677,12 +651,12 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// Greater than zero: This instance follows <paramref name="obj" /> in the sort order.
 	/// </returns>
 	/// <exception cref="System.ArgumentException">Argument must be of type BigRational</exception>
-	int IComparable.CompareTo(Object obj)
-	{
-		if (obj == null) { return 1; }
-		if (!(obj is BigRational)) { throw new ArgumentException($"Argument must be of type {nameof(BigRational)}", nameof(obj)); }
-		return Compare(this, (BigRational)obj);
-	}
+	public readonly int CompareTo(object obj) => obj == null
+			? 1
+			: obj is not BigRational r
+			? throw new ArgumentException($"Argument must be of type {nameof(BigRational)}", nameof(obj))
+			: Compare(this, r)
+		;
 
 	/// <summary>
 	/// Compares the current instance with another object of the same type and
@@ -697,10 +671,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// Zero: This instance occurs in the same position in the sort order as <paramref name="other" />.
 	/// Greater than zero: This instance follows <paramref name="other" /> in the sort order.
 	/// </returns>
-	public int CompareTo(BigRational other)
-	{
-		return Compare(this, other);
-	}
+	public readonly int CompareTo(BigRational other) => Compare(this, other);
 
 	#endregion
 
@@ -711,100 +682,70 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(byte value)
-	{
-		return new BigRational((BigInteger)value);
-	}
+	public static implicit operator BigRational(byte value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="SByte"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(SByte value)
-	{
-		return new BigRational((BigInteger)value);
-	}
+	public static implicit operator BigRational(sbyte value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="Int16"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(Int16 value)
-	{
-		return new BigRational((BigInteger)value);
-	}
+	public static implicit operator BigRational(short value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="UInt16"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(UInt16 value)
-	{
-		return new BigRational((BigInteger)value);
-	}
+	public static implicit operator BigRational(ushort value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="Int32"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(Int32 value)
-	{
-		return new BigRational((BigInteger)value);
-	}
+	public static implicit operator BigRational(int value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="UInt32"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(UInt32 value)
-	{
-		return new BigRational((BigInteger)value);
-	}
+	public static implicit operator BigRational(uint value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="Int64"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(Int64 value)
-	{
-		return new BigRational((BigInteger)value);
-	}
+	public static implicit operator BigRational(long value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="UInt64"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(UInt64 value)
-	{
-		return new BigRational((BigInteger)value);
-	}
+	public static implicit operator BigRational(ulong value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="BigInteger"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(BigInteger value)
-	{
-		return new BigRational(value);
-	}
+	public static implicit operator BigRational(BigInteger value) => new (value);
 
 	/// <summary>
 	/// Performs an explicit conversion from <see cref="System.Single"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static explicit operator BigRational(float value)
-	{
-		return new BigRational(value);
-	}
+	public static explicit operator BigRational(float value) => new (value);
 
 
 	/// <summary>
@@ -812,20 +753,14 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static explicit operator BigRational(double value)
-	{
-		return new BigRational(value);
-	}
+	public static explicit operator BigRational(double value) => new (value);
 
 	/// <summary>
 	/// Performs an explicit conversion from <see cref="System.Decimal"/> to <see cref="ExtendedNumerics.BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.BigRational"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static explicit operator BigRational(decimal value)
-	{
-		return new BigRational(value);
-	}
+	public static explicit operator BigRational(decimal value) => new (value);
 
 	/// <summary>
 	/// Performs an explicit conversion from <see cref="ExtendedNumerics.BigRational"/> to <see cref="System.Double"/>.
@@ -834,9 +769,9 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The result of the conversion.</returns>
 	public static explicit operator double(BigRational value)
 	{
-		double fract = (double)value.FractionalPart;
-		double whole = (double)value.WholePart;
-		double result = whole + (fract * (value.Sign == 0 ? 1 : value.Sign));
+		var fract = (double)value.FractionalPart;
+		var whole = (double)value.WholePart;
+		var result = whole + (fract * (value.Sign == 0 ? 1 : value.Sign));
 		if (value.WholePart == 0)
 		{
 			result = fract;
@@ -851,9 +786,9 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <returns>The result of the conversion.</returns>
 	public static explicit operator decimal(BigRational value)
 	{
-		decimal fract = (decimal)value.FractionalPart;
-		decimal whole = (decimal)value.WholePart;
-		decimal result = whole + (fract * (value.Sign == 0 ? 1 : value.Sign));
+		var fract = (decimal)value.FractionalPart;
+		var whole = (decimal)value.WholePart;
+		var result = whole + (fract * (value.Sign == 0 ? 1 : value.Sign));
 		if (value.WholePart == 0)
 		{
 			result = fract;
@@ -866,13 +801,10 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// </summary>
 	/// <param name="value">The value to convert to a <see cref="ExtendedNumerics.Fraction"/>.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(BigRational value)
-	{
-		return Fraction.Simplify(new Fraction(
+	public static implicit operator Fraction(BigRational value) => Fraction.Simplify(new Fraction(
 				BigInteger.Add(value.FractionalPart.Numerator, BigInteger.Multiply(value.WholePart, value.FractionalPart.Denominator)),
 				value.FractionalPart.Denominator
 			));
-	}
 
 	/// <summary>
 	/// Converts the string representation of a number to its <see cref="ExtendedNumerics.BigRational"/> equivalent.
@@ -892,21 +824,18 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 			throw new ArgumentException("Argument cannot be null, empty or whitespace.");
 		}
 
-		string[] parts = value.Trim().Split('/');
+		var parts = value.Trim().Split('/');
 		if (parts.Length == 1)
 		{
-			BigInteger whole;
-			if (!BigInteger.TryParse(parts[0], out whole))
-			{
-				throw new ArgumentException("Invalid string given for number.");
-			}
-			return new BigRational(whole);
+			return !BigInteger.TryParse(parts[0], out var whole)
+				?              throw new ArgumentException("Invalid string given for number.")
+				: new BigRational(whole);
 		}
 		else if (parts.Length == 2)
 		{
 			BigInteger whole = BigInteger.Zero, numerator, denominator;
 
-			string[] firstParts = parts[0].Trim().Split(new char[] { '+', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+			var firstParts = parts[0].Trim().Split(['+', ' '], StringSplitOptions.RemoveEmptyEntries);
 			if (firstParts.Length == 1)
 			{
 				if (!BigInteger.TryParse(parts[0].Trim(), out numerator))
@@ -952,17 +881,15 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// </summary>
 	/// <param name="other">An object to compare with this object.</param>
 	/// <returns><see langword="true" /> if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns>
-	public bool Equals(BigRational other)
+	public readonly bool Equals(BigRational other)
 	{
-		BigRational reducedThis = BigRational.Reduce(this);
-		BigRational reducedOther = BigRational.Reduce(other);
+		var reducedThis = Reduce(this);
+		var reducedOther = Reduce(other);
 
-		bool result = true;
-
+		var result = true;
 		result &= reducedThis.WholePart.Equals(reducedOther.WholePart);
 		result &= reducedThis.FractionalPart.Numerator.Equals(reducedOther.FractionalPart.Numerator);
 		result &= reducedThis.FractionalPart.Denominator.Equals(reducedOther.FractionalPart.Denominator);
-
 		return result;
 	}
 
@@ -971,21 +898,15 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// </summary>
 	/// <param name="obj">The object to compare with the current object.</param>
 	/// <returns><see langword="true" /> if the specified object  is equal to the current object; otherwise, <see langword="false" />.</returns>
-	public override bool Equals(Object obj)
-	{
-		if (obj == null) { return false; }
-		if (!(obj is BigRational)) { return false; }
-		return Equals((BigRational)obj);
-	}
+	public override readonly bool Equals(object obj)
+		=> obj != null && obj is BigRational b && Equals(b);
 
 	/// <summary>
 	/// Returns a hash code for this instance.
 	/// </summary>
 	/// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
-	public override int GetHashCode()
-	{
-		return CombineHashCodes(WholePart.GetHashCode(), FractionalPart.GetHashCode());
-	}
+	public override readonly int GetHashCode()
+		=> CombineHashCodes(WholePart.GetHashCode(), FractionalPart.GetHashCode());
 
 	/// <summary>
 	/// Combines two hash codes into one.
@@ -993,10 +914,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// <param name="h1">The first hash.</param>
 	/// <param name="h2">The second hash.</param>
 	/// <returns>A new hashcode that represents the combination of the two specified hash codes.</returns>
-	internal static int CombineHashCodes(int h1, int h2)
-	{
-		return (((h1 << 5) + h1) ^ h2);
-	}
+	internal static int CombineHashCodes(int h1, int h2) => (((h1 << 5) + h1) ^ h2);
 
 	#endregion
 
@@ -1007,9 +925,9 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// who's numerator may be larger than its denominator, called an improper fraction.
 	/// </summary>
 	/// <returns>A Fraction <see cref="ExtendedNumerics.Fraction"/> representation of this instance value.</returns>
-	public Fraction GetImproperFraction()
+	public readonly Fraction GetImproperFraction()
 	{
-		BigRational input = NormalizeSign(this);
+		var input = NormalizeSign(this);
 
 		if (input.WholePart == 0 && input.FractionalPart.Sign == 0)
 		{
@@ -1020,17 +938,17 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 		{
 			if (input.WholePart.Sign != 0)
 			{
-				BigInteger whole = BigInteger.Multiply(input.WholePart, input.FractionalPart.Denominator);
+				var whole = BigInteger.Multiply(input.WholePart, input.FractionalPart.Denominator);
 
-				BigInteger remainder = input.FractionalPart.Numerator;
+				var remainder = input.FractionalPart.Numerator;
 
 				if (input.WholePart.Sign == -1)
 				{
 					remainder = BigInteger.Negate(remainder);
 				}
 
-				BigInteger total = BigInteger.Add(whole, remainder);
-				Fraction newFractional = new Fraction(total, input.FractionalPart.Denominator);
+				var total = BigInteger.Add(whole, remainder);
+				var newFractional = new Fraction(total, input.FractionalPart.Denominator);
 				return newFractional;
 			}
 			else
@@ -1050,9 +968,9 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// </summary>
 	public static BigRational Reduce(BigRational value)
 	{
-		BigRational input = NormalizeSign(value);
-		BigRational reduced = Fraction.ReduceToProperFraction(input.FractionalPart);
-		BigRational result = new BigRational(value.WholePart + reduced.WholePart, reduced.FractionalPart);
+		var input = NormalizeSign(value);
+		var reduced = Fraction.ReduceToProperFraction(input.FractionalPart);
+		var result = new BigRational(value.WholePart + reduced.WholePart, reduced.FractionalPart);
 		return result;
 	}
 
@@ -1065,9 +983,7 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// sign of the WholePart property.
 	/// </summary>
 	public static BigRational NormalizeSign(BigRational value)
-	{
-		return value.NormalizeSign();
-	}
+		=> value.NormalizeSign();
 
 	/// <summary>
 	/// Internal method that normalizes the sign of the current instance.
@@ -1092,10 +1008,8 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// instance into its equivalent string representation.
 	/// </summary>
 	/// <returns>The string representation of the current <see cref="ExtendedNumerics.BigRational"/> value.</returns>
-	public override string ToString()
-	{
-		return ToString(CultureInfo.CurrentCulture);
-	}
+	public override readonly string ToString()
+		=> ToString(CultureInfo.CurrentCulture);
 
 	/// <summary>
 	/// Converts the numeric value of the current <see cref="ExtendedNumerics.BigRational"/>
@@ -1106,10 +1020,8 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// The string representation of the current <see cref="ExtendedNumerics.BigRational"/> value
 	/// in the format specified by the format parameter.
 	/// </returns>
-	public String ToString(String format)
-	{
-		return ToString(CultureInfo.CurrentCulture);
-	}
+	public readonly string ToString(string _)
+		=> ToString(CultureInfo.CurrentCulture);
 
 	/// <summary>
 	/// Converts the numeric value of the current <see cref="ExtendedNumerics.BigRational"/>
@@ -1121,10 +1033,8 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// The string representation of the current <see cref="ExtendedNumerics.BigRational"/> value in
 	///	the format specified by the provider parameter.
 	/// </returns>
-	public String ToString(IFormatProvider provider)
-	{
-		return ToString("R", provider);
-	}
+	public readonly string ToString(IFormatProvider provider)
+		=> ToString("R", provider);
 
 	/// <summary>
 	/// Converts the numeric value of the current <see cref="ExtendedNumerics.BigRational"/>
@@ -1137,40 +1047,27 @@ public struct BigRational : IComparable, IComparable<BigRational>, IEquatable<Bi
 	/// The string representation of the current <see cref="ExtendedNumerics.BigRational"/> value as
 	/// specified by the format and provider parameters.
 	/// </returns>
-	public String ToString(String format, IFormatProvider provider)
+	public readonly string ToString(string format, IFormatProvider provider)
 	{
-		NumberFormatInfo numberFormatProvider = (NumberFormatInfo)provider.GetFormat(typeof(NumberFormatInfo));
-		if (numberFormatProvider == null)
-		{
-			numberFormatProvider = CultureInfo.CurrentCulture.NumberFormat;
-		}
+		var numberFormatProvider = (NumberFormatInfo)provider.GetFormat(typeof(NumberFormatInfo));
+		numberFormatProvider ??= CultureInfo.CurrentCulture.NumberFormat;
 
-		string zeroString = numberFormatProvider.NativeDigits[0];
+		var zeroString = numberFormatProvider.NativeDigits[0];
 
-		BigRational input = BigRational.Reduce(this);
+		var input = Reduce(this);
 
-		string whole = input.WholePart != 0 ? String.Format(provider, "{0}", input.WholePart.ToString(format, provider)) : string.Empty;
-		string fractional = input.FractionalPart.Numerator != 0 ? String.Format(provider, "{0}", input.FractionalPart.ToString(format, provider)) : string.Empty;
-		string join = string.Empty;
+		var whole = input.WholePart != 0 ? String.Format(provider, "{0}", input.WholePart.ToString(format, provider)) : string.Empty;
+		var fractional = input.FractionalPart.Numerator != 0 ? String.Format(provider, "{0}", input.FractionalPart.ToString(format, provider)) : string.Empty;
+		var join = string.Empty;
 
 		if (!string.IsNullOrWhiteSpace(whole) && !string.IsNullOrWhiteSpace(fractional))
 		{
-			if (input.WholePart.Sign < 0)
-			{
-				join = $" {numberFormatProvider.NegativeSign} ";
-			}
-			else
-			{
-				join = $" {numberFormatProvider.PositiveSign} ";
-			}
+			join = input.WholePart.Sign < 0 ? $" {numberFormatProvider.NegativeSign} " : $" {numberFormatProvider.PositiveSign} ";
 		}
 
-		if (string.IsNullOrWhiteSpace(whole) && string.IsNullOrWhiteSpace(join) && string.IsNullOrWhiteSpace(fractional))
-		{
-			return zeroString;
-		}
-
-		return string.Concat(whole, join, fractional);
+		return string.IsNullOrWhiteSpace(whole) && string.IsNullOrWhiteSpace(join) && string.IsNullOrWhiteSpace(fractional)
+			? zeroString
+			: string.Concat(whole, join, fractional);
 	}
 
 	#endregion

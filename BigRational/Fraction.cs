@@ -46,16 +46,16 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	#region Static Properties
 
 	/// <summary>Gets a value that represents the number zero (0).</summary>
-	public static readonly Fraction Zero = new (BigInteger.Zero, BigInteger.One);
+	public static readonly Fraction Zero = new(BigInteger.Zero, BigInteger.One);
 
 	/// <summary>Gets a value that represents the number one (1).</summary>
-	public static readonly Fraction One = new (BigInteger.One, BigInteger.One);
+	public static readonly Fraction One = new(BigInteger.One, BigInteger.One);
 
 	/// <summary>Gets a value that represents the number minus one (-1).</summary>
-	public static readonly Fraction MinusOne = new (BigInteger.MinusOne, BigInteger.One);
+	public static readonly Fraction MinusOne = new(BigInteger.MinusOne, BigInteger.One);
 
 	/// <summary>Gets a value that represents the number one half (1/2).</summary>
-	public static readonly Fraction OneHalf = new (BigInteger.One, new BigInteger(2));
+	public static readonly Fraction OneHalf = new(BigInteger.One, new BigInteger(2));
 
 	#endregion
 
@@ -184,7 +184,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 
 			if (precision == 7)
 			{
-				float floatVal = (float)oneOver;
+				var floatVal = (float)oneOver;
 				isWholeNumber = (floatVal % 1 == 0);
 				denom = (BigInteger)floatVal;
 			}
@@ -246,7 +246,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 		var num = BigInteger.Parse(parts[0]);
 		var denom = BigInteger.Parse(parts[1]);
 
-		return new Fraction(num, denom);
+		return new(num, denom);
 	}
 
 	private static Tuple<BigInteger, BigInteger> CheckForWholeValues(double value)
@@ -291,7 +291,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// <returns>The sum.</returns>
 	public static Fraction Add(Fraction augend, Fraction addend) =>
 		// a/b + c/d  == (ad + bc)/bd
-		new (
+		new(
 				BigInteger.Add(
 					BigInteger.Multiply(augend.Numerator, addend.Denominator),
 					BigInteger.Multiply(augend.Denominator, addend.Numerator)
@@ -307,7 +307,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// <returns>The difference.</returns>
 	public static Fraction Subtract(Fraction minuend, Fraction subtrahend) =>
 		// a/b - c/d  == (ad - bc)/bd
-		new (
+		new(
 				BigInteger.Subtract(
 					BigInteger.Multiply(minuend.Numerator, subtrahend.Denominator),
 					BigInteger.Multiply(minuend.Denominator, subtrahend.Numerator)
@@ -333,8 +333,9 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 		var frac2 = Simplify(frac1);
 
 		return frac1 != frac2
-			?           throw new ArithmeticException("Multiply methods needs to simplify result. Please add this behavior to this method.")
-			: frac1;
+			? throw new ArithmeticException("Multiply methods needs to simplify result. Please add this behavior to this method.")
+			: frac1
+			;
 	}
 
 	/// <summary>
@@ -394,9 +395,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// <returns>The quotient.</returns>
 	public static BigInteger DivRem(BigInteger dividend, BigInteger divisor, out Fraction remainder)
 	{
-		var remaind = new BigInteger(-1);
-		var quotient = BigInteger.DivRem(dividend, divisor, out remaind);
-
+		var quotient = BigInteger.DivRem(dividend, divisor, out var remaind);
 		remainder = new Fraction(remaind, divisor);
 		return quotient;
 	}
@@ -410,10 +409,10 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// <exception cref="System.ArgumentException">Cannot raise zero to a negative power - value</exception>
 	public static Fraction Pow(Fraction @base, BigInteger exponent)
 	{
-		if (exponent.Sign == 0) { return Fraction.One; }
-		if (@base.Sign == 0) { return Fraction.Zero; }
-		if (exponent == 1) { return @base; }
-		if (@base == 1) { return Fraction.One; }
+		if (exponent.Sign == 0) return One;
+		if (@base.Sign == 0) return Zero;
+		if (exponent == 1) return @base;
+		if (@base == 1) return One;
 
 		var inputValue = new Fraction(@base);
 		var inputExponent = exponent;
@@ -421,12 +420,12 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 		// Handle negative values of the exponent: n^(-e) -> (1/n)^e
 		if (exponent.Sign < 0)
 		{
-			if (@base == Fraction.Zero)
+			if (@base == Zero)
 			{
 				throw new ArgumentException("Cannot raise zero to a negative power", nameof(@base));
 			}
 
-			inputValue = Fraction.Reciprocal(@base);
+			inputValue = Reciprocal(@base);
 			inputExponent = BigInteger.Negate(exponent);
 		}
 
@@ -469,13 +468,13 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 
 		//if (root < 1) throw new Exception("Root must be greater than or equal to 1");
 		if (value.Sign == -1) throw new Exception("Value must be a positive integer");
-		if (value == Fraction.One || value == Fraction.Zero || root == 1) { return value; }
+		if (value == One || value == Zero || root == 1) return value;
 
-		Fraction lowerbound = Fraction.Zero;
-		Fraction upperbound = new Fraction(value);
-		if (upperbound < Fraction.One)
+		var lowerbound = Zero;
+		var upperbound = new Fraction(value);
+		if (upperbound < One)
 		{
-			upperbound = Fraction.One;
+			upperbound = One;
 		}
 		Fraction mediant;
 
@@ -510,7 +509,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// <returns>The Fraction mid-way between the left Fraction and right Fraction.</returns>
 	public static Fraction Mediant(Fraction left, Fraction right) => new Fraction(
 				BigInteger.Add(left.Numerator, right.Numerator),
-				 BigInteger.Add(left.Denominator, right.Denominator)
+				BigInteger.Add(left.Denominator, right.Denominator)
 			);
 
 	/// <summary>
@@ -522,7 +521,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	{
 		var a = BigInteger.Log(fraction.Numerator);
 		var b = BigInteger.Log(fraction.Denominator);
-		return (a - b);
+		return a - b;
 	}
 
 	/// <summary>
@@ -534,7 +533,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	public static Fraction Reciprocal(Fraction fraction)
 	{
 		var result = new Fraction(fraction.Denominator, fraction.Numerator);
-		var simplified = Fraction.Simplify(result);
+		var simplified = Simplify(result);
 		return simplified;
 	}
 
@@ -543,7 +542,8 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// </summary>
 	/// <param name="fraction">A value to get the absolute value of.</param>
 	/// <returns>The absolute value of value of the specified number.</returns>
-	public static Fraction Abs(Fraction fraction) => (fraction.Numerator.Sign < 0 ? new Fraction(BigInteger.Abs(fraction.Numerator), fraction.Denominator) : fraction);
+	public static Fraction Abs(Fraction fraction)
+		=> fraction.Numerator.Sign < 0 ? new(BigInteger.Abs(fraction.Numerator), fraction.Denominator) : fraction;
 
 	/// <summary>
 	/// Negates the specified value.
@@ -551,9 +551,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// <param name="fraction">The number to negate the value of.</param>
 	/// <returns>The result of the specified value multiplied by negative one (-1).</returns>
 	public static Fraction Negate(Fraction fraction)
-	{
-		return new Fraction(BigInteger.Negate(fraction.Numerator), fraction.Denominator);
-	}
+		=> new(BigInteger.Negate(fraction.Numerator), fraction.Denominator);
 
 	#region GCD & LCM
 
@@ -563,7 +561,8 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// <param name="left">The first value.</param>
 	/// <param name="right">The second value.</param>
 	/// <returns>The least common denominator of left and right.</returns>
-	public static Fraction LeastCommonDenominator(Fraction left, Fraction right) => new Fraction((left.Denominator * right.Denominator), BigInteger.GreatestCommonDivisor(left.Denominator, right.Denominator));
+	public static Fraction LeastCommonDenominator(Fraction left, Fraction right)
+		=> new (left.Denominator * right.Denominator, BigInteger.GreatestCommonDivisor(left.Denominator, right.Denominator));
 
 	/// <summary>
 	/// Finds the greatest common divisor of two <see cref="ExtendedNumerics.Fraction"/> values.
@@ -660,14 +659,14 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// </summary>
 	/// <param name="value">The value to increment.</param>
 	/// <returns>The value of the value parameter incremented by 1.</returns>
-	public static Fraction operator ++(Fraction value) => Add(value, Fraction.One);
+	public static Fraction operator ++(Fraction value) => Add(value, One);
 
 	/// <summary>
 	/// Decrements a <see cref="T:ExtendedNumerics.Fraction" /> value by 1.
 	/// </summary>
 	/// <param name="value">The value to decrement.</param>
 	/// <returns>The value of the value parameter decremented by 1.</returns>
-	public static Fraction operator --(Fraction value) => Subtract(value, Fraction.One);
+	public static Fraction operator --(Fraction value) => Subtract(value, One);
 
 	#endregion
 
@@ -778,9 +777,10 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// <exception cref="System.ArgumentException">Argument must be of type Fraction</exception>
 	readonly int IComparable.CompareTo(object obj) => obj == null
 			? 1
-			: obj is not Fraction
+			: obj is not Fraction f
 			? throw new ArgumentException($"Argument must be of type {nameof(Fraction)}", nameof(obj))
-			: Compare(this, (Fraction)obj);
+			: Compare(this, f)
+		;
 
 	/// <summary>
 	/// Compares the current instance with another object of the same type and
@@ -806,91 +806,91 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(BigInteger value) => new Fraction(value);
+	public static implicit operator Fraction(BigInteger value) => new (value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="System.Byte"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(byte value) => new Fraction((BigInteger)value);
+	public static implicit operator Fraction(byte value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="SByte"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(sbyte value) => new Fraction((BigInteger)value);
+	public static implicit operator Fraction(sbyte value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="Int16"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(short value) => new Fraction((BigInteger)value);
+	public static implicit operator Fraction(short value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="UInt16"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(ushort value) => new Fraction((BigInteger)value);
+	public static implicit operator Fraction(ushort value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="Int32"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(int value) => new Fraction(value);
+	public static implicit operator Fraction(int value) => new (value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="UInt32"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(uint value) => new Fraction((BigInteger)value);
+	public static implicit operator Fraction(uint value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="Int64"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(long value) => new Fraction((BigInteger)value);
+	public static implicit operator Fraction(long value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="UInt64"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator Fraction(ulong value) => new Fraction((BigInteger)value);
+	public static implicit operator Fraction(ulong value) => new ((BigInteger)value);
 
 	/// <summary>
 	/// Performs an explicit conversion from <see cref="System.Single"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static explicit operator Fraction(float value) => new Fraction(value);
+	public static explicit operator Fraction(float value) => new (value);
 
 	/// <summary>
 	/// Performs an explicit conversion from <see cref="System.Double"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static explicit operator Fraction(double value) => new Fraction(value);
+	public static explicit operator Fraction(double value) => new (value);
 
 	/// <summary>
 	/// Performs an explicit conversion from <see cref="System.Decimal"/> to <see cref="Fraction"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static explicit operator Fraction(decimal value) => new Fraction(value);
+	public static explicit operator Fraction(decimal value) => new (value);
 
 	/// <summary>
 	/// Performs an implicit conversion from <see cref="Fraction"/> to <see cref="BigRational"/>.
 	/// </summary>
 	/// <param name="value">The value.</param>
 	/// <returns>The result of the conversion.</returns>
-	public static implicit operator BigRational(Fraction value) => new BigRational(BigInteger.Zero, value);
+	public static implicit operator BigRational(Fraction value) => new (BigInteger.Zero, value);
 
 	/// <summary>
 	/// Performs an explicit conversion from <see cref="Fraction"/> to <see cref="BigInteger"/>.
@@ -959,7 +959,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 		}
 
 		// scale the numerator to preserve the fraction part through the integer division
-		BigInteger denormalized = (value.Numerator * _decimalPrecision) / value.Denominator;
+		var denormalized = (value.Numerator * _decimalPrecision) / value.Denominator;
 		if (denormalized.IsZero)
 		{
 			return decimal.Zero; // underflow - fraction is too small to fit in a decimal
@@ -972,8 +972,10 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 			}
 			else
 			{
-				var dec = new DecimalUInt32();
-				dec.dec = (decimal)denormalized;
+				DecimalUInt32 dec = new()
+				{
+					dec = (decimal)denormalized
+				};
 				dec.flags = (dec.flags & ~DecimalScaleMask) | (scale << 16);
 				return dec.dec;
 			}
@@ -1015,7 +1017,9 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// </summary>
 	/// <param name="obj">The object to compare with the current object.</param>
 	/// <returns><see langword="true" /> if the specified object  is equal to the current object; otherwise, <see langword="false" />.</returns>
-	public override readonly bool Equals(object obj) => obj != null && obj is Fraction f && Equals(this, f);
+	public override readonly bool Equals(object obj)
+		=> obj != null && obj is Fraction f && Equals(this, f)
+		;
 
 	/// <summary>
 	/// Indicates whether the current object is equal to another object of the same type.
@@ -1064,11 +1068,11 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 
 		if (input.Numerator.IsZero)
 		{
-			return new BigRational(BigInteger.Zero, input);
+			return new(BigInteger.Zero, input);
 		}
 		else if (input.Denominator.IsOne)
 		{
-			return new BigRational(input.Numerator, Fraction.Zero);
+			return new(input.Numerator, Fraction.Zero);
 		}
 		else
 		{
@@ -1083,12 +1087,12 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 				{
 					wholeUnits = BigInteger.Negate(wholeUnits);
 				}
-				result = new BigRational(wholeUnits, new Fraction(remainder, input.Denominator));
+				result = new(wholeUnits, new Fraction(remainder, input.Denominator));
 				return result;
 			}
 			else
 			{
-				result = new BigRational(BigInteger.Zero, input.Numerator, input.Denominator);
+				result = new(BigInteger.Zero, input.Numerator, input.Denominator);
 				return result;
 			}
 		}
@@ -1110,7 +1114,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 		var num = input.Numerator;
 		var denom = input.Denominator;
 		var gcd = BigInteger.GreatestCommonDivisor(num, denom);
-		return gcd > BigInteger.One ? new Fraction(num / gcd, denom / gcd) : new Fraction(input);
+		return gcd > BigInteger.One ? new Fraction(num / gcd, denom / gcd) : new (input);
 	}
 
 	/// <summary>
@@ -1141,7 +1145,7 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 			denom = BigInteger.Negate(denom);
 		}
 
-		return new Fraction(numer, denom);
+		return new (numer, denom);
 	}
 
 	#endregion
@@ -1155,7 +1159,8 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// <returns>
 	/// The string representation of the current <see cref="T:ExtendedNumerics.Fraction" /> value.
 	/// </returns>
-	public override readonly string ToString() => ToString(CultureInfo.CurrentCulture);
+	public override readonly string ToString()
+		=> ToString(CultureInfo.CurrentCulture);
 
 	/// <summary>
 	/// Converts the numeric value of the current <see cref="T:ExtendedNumerics.Fraction" />
@@ -1167,7 +1172,8 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// The string representation of the current <see cref="T:ExtendedNumerics.Fraction" /> value
 	/// in the format specified by the format parameter.
 	/// </returns>
-	public readonly string ToString(string format) => ToString(format, CultureInfo.CurrentCulture);
+	public readonly string ToString(string format)
+		=> ToString(format, CultureInfo.CurrentCulture);
 
 	/// <summary>
 	/// Converts the numeric value of the current <see cref="T:ExtendedNumerics.Fraction" />
@@ -1179,7 +1185,8 @@ public struct Fraction : IComparable, IComparable<Fraction>, IEquatable<Fraction
 	/// The string representation of the current <see cref="T:ExtendedNumerics.Fraction" /> value in
 	/// the format specified by the provider parameter.
 	/// </returns>
-	public readonly string ToString(IFormatProvider provider) => ToString("R", provider);
+	public readonly string ToString(IFormatProvider provider)
+		=> ToString("R", provider);
 
 	/// <summary>
 	/// Converts the numeric value of the current <see cref="T:ExtendedNumerics.Fraction" />

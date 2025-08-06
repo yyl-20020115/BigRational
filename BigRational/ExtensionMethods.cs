@@ -129,9 +129,9 @@ public static class ExtensionMethods
 		if (source.Sign == -1) throw new Exception("Value must be a positive integer");
 
 		remainder = 0;
-		if (source == BigInteger.One) { return BigInteger.One; }
-		if (source == BigInteger.Zero) { return BigInteger.Zero; }
-		if (root == 1) { return source; }
+		if (source == BigInteger.One) return BigInteger.One; 
+		if (source == BigInteger.Zero) return BigInteger.Zero;
+		if (root == 1) return source; 
 
 		var upperbound = source;
 		var lowerbound = BigInteger.Zero;
@@ -172,7 +172,7 @@ public static class ExtensionMethods
 			{
 				result = (result * b);
 				exp -= 1;
-				if (exp == 0) { break; }
+				if (exp == 0) break;
 			}
 
 			b = (b * b); // Square
